@@ -184,6 +184,7 @@ namespace NeuralNetwork1
         private class NeuralNode
         {
             public double Value { get; set; }
+            public double Offset { get; set; }
             public double Error { get; set; }
             private List<NeuralLink> prevLayer;
             private List<NeuralLink> nextLayer;
@@ -195,6 +196,7 @@ namespace NeuralNetwork1
                 this.activationFunction = activationFunction;
                 prevLayer = new List<NeuralLink>();
                 nextLayer = new List<NeuralLink>();
+                Offset = 0.05;
             }
 
             public void LinkNextNode(NeuralNode next)
@@ -206,13 +208,18 @@ namespace NeuralNetwork1
             public double Eval()
             {
                 double sum = EvalInputSum();
-                Value = activationFunction.Invoke(sum);
+                Value = activationFunction.Invoke(sum + Offset);
+                if (Value == 0.5)
+                {
+                    var x = 5;
+                }                    
                 return Value;
             }
 
             public void ReevalLinks(double learningRate)
             {
                 Error = Error * Value * (1 - Value);
+                Offset += learningRate * Error;
                 foreach (var link in prevLayer)
                 {
                     link.prevNode.Error += Error * link.Weight;
@@ -244,8 +251,8 @@ namespace NeuralNetwork1
             {                
                 this.prevNode = prevNode;
                 this.nextNode = nextNode;
-                this.Weight = rand.NextDouble() - 1.0;
-            }
+                this.Weight = rand.NextDouble() - 0.5;
+            }            
         }
 
         private NeuralNode[][] nodeLayers;
@@ -342,9 +349,9 @@ namespace NeuralNetwork1
             for (var i = 0; i < sample.input.Length; i++)                
                 nodeLayers[0][i].Value = sample.input[i];
 
-            for (var i = 1; i < nodeLayers.Length; i++)
-                foreach (var node in nodeLayers[i])
-                    node.Eval();
+            for (var i = 1; i < nodeLayers.Length; i++)                
+                foreach (var node in nodeLayers[i])                    
+                    node.Eval();            
 
             // Copy output to sample
             var lastLayer = nodeLayers.Last();
